@@ -23,7 +23,7 @@ colour codes and the JSON envelope, so switching costs nothing.
 | verb | state |
 |---|---|
 | `ls`, `ls --json` | byte-identical to maw-rs |
-| `a`/`attach` | live-session tier: exact, unique prefix, unique substring; `--print`, `--readonly` |
+| `a`/`attach` | live-session tier: exact, unique prefix, unique substring; `--print`, `--plan-json`, `--readonly` — plan output byte-identical to maw-rs |
 | `peek` | `--lines N` (default 30), `--history` |
 | `ls -v` | not yet |
 | `wake`, `run`, `kill`, `hey`, `bg`, `send-*`, `work` | not yet |
