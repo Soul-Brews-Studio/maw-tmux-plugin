@@ -34,10 +34,40 @@ const dot = status => {
   return color(code, glyph);
 };
 
-export function collectSessions(now = Math.floor(Date.now() / 1000)) {
+// maw-rs hides infrastructure channel sessions from `ls` unless --channels.
+// "discord-admin" is a real working session, not a channel, so it stays.
+export function isChannelSession(session) {
+  return session.endsWith("-discord") && !session.includes("discord-admin");
+}
+
+// maw-rs hides team sessions unless --teams.
+export function isTeamSession(session) {
+  return session.startsWith("team-") || session.includes(":team-") || session.includes("-team-");
+}
+
+// The window name inside "session:window.pane".
+export function windowName(target) {
+  const afterSession = target.includes(":") ? target.slice(target.indexOf(":") + 1) : target;
+  const dot = afterSession.lastIndexOf(".");
+  return dot === -1 ? afterSession : afterSession.slice(0, dot);
+}
+
+// A session's oracle is the first pane whose *window* is named "<name>-oracle".
+// Session name and window name differ often enough that this must read windows.
+export function oracleWindowName(panes) {
+  for (const pane of panes) {
+    const window = windowName(pane.target);
+    if (window.endsWith("-oracle")) return window;
+  }
+  return undefined;
+}
+
+export function collectSessions(now = Math.floor(Date.now() / 1000), { channels = false, teams = false } = {}) {
   const panes = listPanes();
   const sessions = new Map();
   for (const pane of panes) {
+    if (!channels && isChannelSession(pane.session)) continue;
+    if (!teams && isTeamSession(pane.session)) continue;
     const age = pane.activity === undefined ? undefined : Math.max(0, now - pane.activity);
     const status = paneStatus(age);
     if (!sessions.has(pane.session)) sessions.set(pane.session, { session: pane.session, panes: [], statuses: [] });
@@ -52,8 +82,16 @@ export function collectSessions(now = Math.floor(Date.now() / 1000)) {
 
 export function renderCompact(sessions) {
   if (!sessions.length) return "no active sessions\n";
-  const lines = sessions.map(entry =>
-    `  ${dot(entry.status)} ${color("36", entry.session)}  ${color("2", `${entry.panes.length} pane${entry.panes.length === 1 ? "" : "s"}`)}`);
+  const lines = sessions.map(entry => {
+    const oracle = oracleWindowName(entry.panes);
+    const label = oracle ? ` · ${color("2", oracle)}` : "";
+    const panes = color("2", `${entry.panes.length} pane${entry.panes.length === 1 ? "" : "s"}`);
+    const agents = entry.panes.filter(pane => isAgentCommand(pane.command)).length;
+    const agentCount = agents > 0
+      ? `  ${color("94", `${agents} agent${agents === 1 ? "" : "s"}`)}`
+      : "";
+    return `  ${dot(entry.status)} ${color("36", entry.session)}${label}  ${panes}${agentCount}`;
+  });
   lines.push("", `  ${color("2", "→ maw ls -v    full detail")}`);
   return `${lines.join("\n")}\n`;
 }
@@ -64,12 +102,18 @@ export function renderJson(sessions) {
     mode: "compact",
     scope: "local",
     json: true,
-    sessions: sessions.map(entry => ({
-      session: entry.session,
-      status: entry.status,
-      panes: entry.panes.length,
-      agents: entry.panes.filter(pane => isAgentCommand(pane.command)).length,
-    })),
+    // maw-rs emits "oracle" only when there is one, so the key must be absent
+    // rather than null — a null would change the JSON shape for every session.
+    sessions: sessions.map(entry => {
+      const oracle = oracleWindowName(entry.panes);
+      return {
+        session: entry.session,
+        status: entry.status,
+        panes: entry.panes.length,
+        agents: entry.panes.filter(pane => isAgentCommand(pane.command)).length,
+        ...(oracle ? { oracle } : {}),
+      };
+    }),
   })}\n`;
 }
 
@@ -82,7 +126,10 @@ export function isAgentCommand(command) {
 
 export function ls(args) {
   const json = args.includes("--json");
-  const sessions = collectSessions();
+  const sessions = collectSessions(Math.floor(Date.now() / 1000), {
+    channels: args.includes("--channels"),
+    teams: args.includes("--teams"),
+  });
   process.stdout.write(json ? renderJson(sessions) : renderCompact(sessions));
   return 0;
 }
