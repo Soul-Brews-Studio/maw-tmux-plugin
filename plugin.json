@@ -1,0 +1,12 @@
+{
+  "name": "tmux",
+  "version": "0.1.0",
+  "tier": "extra",
+  "runtime": "bun-dev",
+  "target": "js",
+  "entry": "index.mjs",
+  "cli": {
+    "command": "tmux",
+    "help": "maw tmux <ls|a|wake|work|run|hey|kill|bud|token|bring|feed|x|bg|send-*|calver|...> — the maw-rs verbs, forwarded"
+  }
+}
