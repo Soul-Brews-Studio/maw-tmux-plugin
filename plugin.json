@@ -7,7 +7,7 @@
   "entry": "index.mjs",
   "cli": {
     "command": "tmux",
-    "help": "maw tmux <ls> [--json] \u2014 tmux fleet verbs, ported from maw-rs",
+    "help": "maw tmux <ls|a|peek> [--json] — tmux fleet verbs, ported from maw-rs and maw-js",
     "interactive": true
   },
   "sdk": "^1.0.0",

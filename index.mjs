@@ -4,12 +4,18 @@
 // The tmux counterpart to maw-herdr-plugin. Pair with: maw default set tmux
 import { TmuxUnreachable } from "./src/tmux.mjs";
 import { ls } from "./src/ls.mjs";
+import { attach } from "./src/attach.mjs";
+import { peek } from "./src/peek.mjs";
 
-const VERBS = { ls, list: ls };
+const VERBS = { ls, list: ls, a: attach, attach, peek };
 
 const HELP = `maw tmux <verb> [args] — tmux fleet verbs
 
-  ls [--json]        list live local sessions
+  ls [--json]                      list live local sessions
+  a|attach <target> [--print] [--readonly|-r]
+                                   attach a live session (switch-client inside tmux)
+  peek <target> [--lines N] [--history]
+                                   read a pane's output without attaching
 
 With 'maw default set tmux', bare 'maw ls' routes here.
 Ported from maw-rs, not forwarded to it: no maw-rs binary is required.`;
