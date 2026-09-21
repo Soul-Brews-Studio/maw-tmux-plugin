@@ -25,13 +25,23 @@ colour codes and the JSON envelope, so switching costs nothing.
 | `ls`, `ls --json` | byte-identical to maw-rs |
 | `a`/`attach` | live-session tier: exact, unique prefix, unique substring; `--print`, `--plan-json`, `--readonly` — plan output byte-identical to maw-rs |
 | `peek` | `--lines N` (default 30), `--history` |
+| `wake` | resolves the oracle, wakes its window in the fleet session that owns it; `--attach`, `--session`, `--dry-run` |
 | `ls -v` | not yet |
-| `wake`, `run`, `kill`, `hey`, `bg`, `send-*`, `work` | not yet |
+| `run`, `kill`, `hey`, `bg`, `send-*`, `work` | not yet |
 
 `a` resolves live sessions only. maw-rs additionally reaches sleeping
 fleet-registry sessions, oracles, squads and remote nodes over ssh; this plugin
 is local-only by design, so an unmatched target prints candidates rather than
 guessing.
+
+`wake` never invents a session number. maw-rs allocates the `<NN>-<name>` prefix
+itself, and a session created under a number it would not have chosen becomes a
+second, competing fleet entry for the same oracle. With no entry yet, `wake`
+prints the two commands that create one properly rather than guessing.
+
+A target that is not live is usually a sleeping oracle, not a typo, so `a` reads
+`~/.maw/oracles.json` and `~/.maw/fleet/*.json` and answers with the runnable
+wake command, byte-identical to maw-rs.
 
 `peek` runs `capture-pane` through argv, never a shell. maw-js interpolated the
 target into a shell string, so a target containing a quote reached `sh`; argv

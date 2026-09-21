@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { TmuxUnreachable } from "./tmux.mjs";
 import { liveSessions, matchLive } from "./resolve.mjs";
+import { suggestionsFor, renderSuggestions } from "./registry.mjs";
 
 // Ported from maw-rs core_impl/attach.rs, local tier only. maw-rs also resolves
 // sleeping fleet-registry sessions, oracles and squads (tiers 2-3, including
@@ -74,18 +75,17 @@ export function attach(argv) {
 
   const alive = liveSessions();
   const resolved = resolveTarget(target, alive);
-  if (resolved.kind === "not-found") {
-    console.error(`maw tmux a: "${target}" matches no live session`);
-    if (resolved.candidates.length === 0) {
-      console.error(`  tmux new-session -d -s ${target}`);
-    } else {
+  // A target that is not live is usually a sleeping oracle, not a typo. maw-rs
+  // answers with the command that wakes it, so the dead end stays one step from
+  // being fixed instead of sending the reader to --help.
+  if (resolved.kind === "not-found" || resolved.kind === "ambiguous") {
+    const reason = resolved.kind === "ambiguous"
+      ? "matches multiple sessions"
+      : "not found as a live session";
+    console.error(renderSuggestions("attach", target, reason, suggestionsFor(target)));
+    if (resolved.kind === "ambiguous") {
       for (const name of resolved.candidates.slice(0, 10)) console.error(`  maw tmux a ${name}`);
     }
-    return 1;
-  }
-  if (resolved.kind === "ambiguous") {
-    console.error(`maw tmux a: "${target}" matches multiple sessions`);
-    for (const name of resolved.candidates.slice(0, 10)) console.error(`  maw tmux a ${name}`);
     return 1;
   }
 

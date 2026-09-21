@@ -6,8 +6,9 @@ import { TmuxUnreachable } from "./src/tmux.mjs";
 import { ls } from "./src/ls.mjs";
 import { attach } from "./src/attach.mjs";
 import { peek } from "./src/peek.mjs";
+import { wake } from "./src/wake.mjs";
 
-const VERBS = { ls, list: ls, a: attach, attach, peek };
+const VERBS = { ls, list: ls, a: attach, attach, peek, wake };
 
 const HELP = `maw tmux <verb> [args] — tmux fleet verbs
 
@@ -16,6 +17,8 @@ const HELP = `maw tmux <verb> [args] — tmux fleet verbs
                                    attach a live session (switch-client inside tmux)
   peek <target> [--lines N] [--history]
                                    read a pane's output without attaching
+  wake <target> [--attach|-a] [--session <NN>-<name>] [--dry-run]
+                                   wake an oracle's window in its fleet session
 
 With 'maw default set tmux', bare 'maw ls' routes here.
 Ported from maw-rs, not forwarded to it: no maw-rs binary is required.`;
